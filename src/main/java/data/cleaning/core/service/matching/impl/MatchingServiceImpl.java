@@ -1316,8 +1316,8 @@ public class MatchingServiceImpl implements MatchingService {
 			matches.add(m);
 		}
 
-		saveToFileCache(constraint, matches, tgtFileName, mFileName,
-				simThreshold);
+//		saveToFileCache(constraint, matches, tgtFileName, mFileName,
+//				simThreshold);
 
 		return matches;
 	}
