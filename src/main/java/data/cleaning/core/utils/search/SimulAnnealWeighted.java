@@ -39,6 +39,10 @@ public class SimulAnnealWeighted extends Search {
 		this.indNormStrat = indNormStrat;
 	}
 
+	public List<Objective> getWeightedFns() {
+		return weightedFns;
+	}
+
 	/*
 	 * More than 1 solution can be found.
 	 */
@@ -97,11 +101,11 @@ public class SimulAnnealWeighted extends Search {
 				positionToChoices, pInfo.getPositionToExactMatch(),
 				pInfo.getTidToPosition());
 
-		if(shdReturnInit) {
+		if (shdReturnInit) {
 			solns.add(currentSoln);
 			return solns;
 		}
-		
+
 		List<Recommendation> currentSolnRecs = currentSoln.getRecommendations();
 
 		if (currentSoln == null || currentSolnRecs == null
@@ -199,25 +203,30 @@ public class SimulAnnealWeighted extends Search {
 					double objOut = weightedFn.out(randNeighb, tgtDataset,
 							mDataset, maxPvt, maxInd, recSize);
 					fnout += objOut * weightedFn.getWeight();
-
+					
+					
 					// TODO: Removed this debugging.
-					// sb.append(weightedFn.getClass().getSimpleName()
-					// + "(norm)[weight=" + weightedFn.getWeight()
-					// + "] : " + objOut + " \n");
-					//
-					// if (weightedFn.getClass().getSimpleName()
-					// .equals("PrivacyObjective")) {
-					// sb.append(weightedFn.getClass().getSimpleName()
-					// + " (unnorm) : " + (objOut * maxPvt) + " \n");
-					// } else if (weightedFn.getClass().getSimpleName()
-					// .equals("CleaningObjective")) {
-					// sb.append("Upper bound on ind : " + maxInd + " \n");
-					// sb.append(weightedFn.getClass().getSimpleName()
-					// + " (unnorm) : " + (objOut * maxInd) + " \n");
-					// } else {
-					// sb.append(weightedFn.getClass().getSimpleName()
-					// + " (unnorm) : " + (objOut * recSize) + " \n");
-					// }
+//					sb.append(weightedFn.getClass().getSimpleName()
+//							+ "(norm)[weight=" + weightedFn.getWeight()
+//							+ "] : " + objOut + " \n");
+
+					if (weightedFn.getClass().getSimpleName()
+							.equals("PrivacyObjective")) {
+						randNeighb.setPvtOut(objOut * weightedFn.getWeight());
+						
+//						sb.append(weightedFn.getClass().getSimpleName()
+//								+ " (unnorm) : " + (objOut * maxPvt) + " \n");
+					} else if (weightedFn.getClass().getSimpleName()
+							.equals("CleaningObjective")) {
+						randNeighb.setIndOut(objOut * weightedFn.getWeight());
+//						sb.append("Upper bound on ind : " + maxInd + " \n");
+//						sb.append(weightedFn.getClass().getSimpleName()
+//								+ " (unnorm) : " + (objOut * maxInd) + " \n");
+					} else {
+						randNeighb.setChangesOut(objOut * weightedFn.getWeight());
+//						sb.append(weightedFn.getClass().getSimpleName()
+//								+ " (unnorm) : " + (objOut * recSize) + " \n");
+					}
 
 				}
 				// sb.append("Iteration : " + iter);

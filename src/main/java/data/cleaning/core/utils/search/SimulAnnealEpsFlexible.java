@@ -18,6 +18,7 @@ import data.cleaning.core.utils.objectives.CleaningObjective;
 import data.cleaning.core.utils.objectives.CustomCleaningObjective;
 import data.cleaning.core.utils.objectives.IndNormStrategy;
 import data.cleaning.core.utils.objectives.Objective;
+import data.cleaning.core.utils.objectives.PrivacyObjective;
 
 /**
  * This is different from SimulAnnealEps where the ind, pvt and changes
@@ -163,7 +164,13 @@ public class SimulAnnealEpsFlexible extends Search {
 
 				double newFnOut = fn.out(randNeighb, tgtDataset, mDataset,
 						maxPvt, maxInd, recSize);
-
+				if(fn instanceof PrivacyObjective) {
+					randNeighb.setPvtOut(newFnOut);
+				} else if(fn instanceof CustomCleaningObjective) {
+					randNeighb.setIndOut(newFnOut);
+				} else {
+					randNeighb.setChangesOut(newFnOut);
+				}
 				double delta = currentFnOut - newFnOut;
 
 				boolean satisfiesBound = true;
@@ -179,7 +186,13 @@ public class SimulAnnealEpsFlexible extends Search {
 				for (Objective bounded : boundedFns) {
 					double bOut = bounded.out(randNeighb, tgtDataset, mDataset,
 							maxPvt, maxInd, recSize);
-
+					if(bounded instanceof PrivacyObjective) {
+						randNeighb.setPvtOut(bOut);
+					} else if(bounded instanceof CustomCleaningObjective) {
+						randNeighb.setIndOut(bOut);
+					} else {
+						randNeighb.setChangesOut(bOut);
+					}
 					// sb.append(bounded.getClass().getSimpleName() + " : " +
 					// bOut
 					// + " \n");
