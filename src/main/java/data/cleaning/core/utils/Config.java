@@ -120,7 +120,7 @@ public class Config {
 	// This is to toggle the decision rule matching on and off. true = off.
 	public static final boolean SHOULD_AVERAGE = true;
 
-	public static final InitStrategy INIT_STRATEGY = InitStrategy.GREEDY_BEST_MATCH;
+	public static final InitStrategy INIT_STRATEGY = InitStrategy.SMALL_DATASETS;
 	public static boolean shdPartitionViols = true;
 
 	// Simulated annealing settings.
@@ -131,8 +131,8 @@ public class Config {
 	public static final double BEST_ENERGY = 0.00001d;
 
 	// Simulated annealing settings- epsilon vs pvt loss.
-	public static final double START_TEMP_EVP = 0.0009d;
-	public static final double FINAL_TEMP_EVP = 0.00005d;
+	public static final double START_TEMP_EVP = 0.009d;
+	public static final double FINAL_TEMP_EVP = 0.000005d;
 	public static final double ALPHA_TEMP_EVP = 0.998d;
 	public static final double STEPS_PER_TEMP_EVP = 1;
 	public static final double BEST_ENERGY_EVP = 0.0001d;
@@ -177,7 +177,7 @@ public class Config {
 	// don't want the algorithm to keep repeating and evaluating the same
 	// neighbs again and again.
 	public static final int SA_REPEAT_NEIGHB_CACHE_SIZE = 300;
-	public static final int SA_REPEAT_NEIGHB_THRESHOLD = 3;
+	public static final int SA_REPEAT_NEIGHB_THRESHOLD = 500;
 
 	public static final Double[] EPSILON_VS_PVT_LOSS = new Double[] { 0.84d,
 			0.86d, 0.88d, 0.90d, 0.92d, 0.94d };

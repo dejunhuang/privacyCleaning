@@ -707,6 +707,67 @@ public abstract class Search {
 		return can;
 	}
 
+	
+	public Candidate getSmallDatasetMatch(int sigSize,
+			Map<Integer, Map<Integer, Choice>> positionToChoices,
+			Map<Long, Integer> tIdToPosition) {
+
+		Candidate can = new Candidate();
+		Map<Integer, List<Recommendation>> positionToRecs = new LinkedHashMap<>();
+		Map<Integer, Integer> positionToChoiceNum = new LinkedHashMap<>();
+
+		int step = sigSize / positionToChoices.keySet().size();
+		char[] newSign = new char[sigSize];
+
+		for (int i = 0; i < sigSize; i = i + step) {
+			int position = i / step;
+			Map<Integer, Choice> choices = positionToChoices.get(position);
+			List<Recommendation> recList = new ArrayList<>();
+
+			int choiceNum = 0;
+
+			// Select the first non exact match.
+			for (int bestChoice = 0; bestChoice < choices.keySet().size(); bestChoice++) {
+				Choice c = choices.get(bestChoice);
+				if (c == null)
+					break;
+
+				if (Math.abs(1f - c.getDist()) > Config.FLOAT_EQUALIY_EPSILON) {
+					choiceNum = bestChoice;
+					break;
+				}
+			}
+
+			Choice choiceObj = choices.get(choiceNum);
+			List<Recommendation> choice = null;
+
+			if (choiceObj != null)
+				choice = choiceObj.getRecs();
+
+			for (int j = 0; j < step; j++) {
+				// Possible because (i) no matches or (ii) exact match.
+				if (choice != null) {
+					if(choice.get(j) != null) {
+						newSign[i + j] = '1';
+					} else {
+						newSign[i + j] = '0';
+					}
+					
+					recList.add(choice.get(j));
+				}
+			}
+
+			positionToRecs.put(position, recList);
+			positionToChoiceNum.put(position, choiceNum);
+		}
+
+		can.setPositionToChoiceNum(positionToChoiceNum);
+		can.setPositionToRecs(positionToRecs);
+		can.setSignature(newSign);
+		can.settIdToPosition(tIdToPosition);
+		return can;
+	}
+	
 	public Set<Candidate> getBitFlipNeighbs(Candidate currentSoln,
 			Map<Integer, Map<Integer, Choice>> positionToChoices) {
 		char[] sign = currentSoln.getSignatureCopy();
@@ -991,10 +1052,15 @@ public abstract class Search {
 		} else if (strategy == InitStrategy.RANDOM_GREEDY_SIG) {
 			initialSoln = getRandGreedySig(sigSize, positionToChoices,
 					positionToExactMatches, tIdToPosition);
+		} else if (strategy == InitStrategy.SMALL_DATASETS) {
+			initialSoln = getSmallDatasetMatch(sigSize, positionToChoices,
+					tIdToPosition);
 		} else {
 			initialSoln = getGreedyBestMatch(sigSize, positionToChoices,
 					tIdToPosition);
 		}
+		
+		
 
 		logger.log(ProdLevel.PROD, "\n\n" + strategy + ", Initial soln : "
 				+ initialSoln.getRecommendations());

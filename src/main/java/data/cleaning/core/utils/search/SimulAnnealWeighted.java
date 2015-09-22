@@ -1,5 +1,6 @@
 package data.cleaning.core.utils.search;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,8 @@ public class SimulAnnealWeighted extends Search {
 			List<Match> tgtMatches, TargetDataset tgtDataset,
 			MasterDataset mDataset, InfoContentTable table,
 			boolean shdReturnInit) {
+		logger.log(ProdLevel.PROD, "\n\nPvt table : "
+				 + table.toString());
 		int numIter = (int) Math.ceil(Math.log(finalTemperature
 				/ initTemperature)
 				/ Math.log(alpha));
@@ -118,11 +121,27 @@ public class SimulAnnealWeighted extends Search {
 		double currentFnOut = 0d;
 
 		for (Objective weightedFn : weightedFns) {
-			currentFnOut += weightedFn.out(currentSoln, tgtDataset, mDataset,
+			double wOut = weightedFn.out(currentSoln, tgtDataset, mDataset,
 					maxPvt, maxInd, recSize) * weightedFn.getWeight();
-		}
+			
 
-		// logger.log(ProdLevel.PROD, "Out : " + currentFnOut);
+			if (weightedFn.getClass().getSimpleName()
+					.equals("PrivacyObjective")) {
+				initialSoln.setPvtOut(wOut);
+				
+			} else if (weightedFn.getClass().getSimpleName()
+					.equals("CleaningObjective")) {
+				initialSoln.setIndOut(wOut);
+			} else {
+				initialSoln.setChangesOut(wOut);
+			}
+			
+			currentFnOut += wOut;
+			logger.log(ProdLevel.PROD,weightedFn.getClass() + ", Out : " + wOut);
+		}
+		bestFnOut = currentFnOut;
+
+		logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
 
 		// How many worse solutions are accepted throughout this process?
 		int accepted = 0;
@@ -161,21 +180,20 @@ public class SimulAnnealWeighted extends Search {
 				if (sRecs.isEmpty())
 					continue;
 
-				// logger.log(
-				// DebugLevel.DEBUG,
-				// "\nNeighb: "
-				// + sRecs
-				// + ", \nDiff wrt current soln (added): "
-				// + randNeighb.getAdded()
-				// + ", \nDiff wrt current soln (removed): "
-				// + randNeighb.getRemoved()
-				// + ", \nType: "
-				// + randNeighb.getNeighbType().name()
-				// + ", \nSign: "
-				// + Arrays.toString(randNeighb.getSignatureCopy())
-				// + ", \nTemperature : "
-				// + Math.round(temperature * 100) / 100.0d
-				// + ", \nIteration : " + iter);
+				logger.log(ProdLevel.PROD,
+				 "\nNeighb: "
+				 + sRecs
+				 + ", \nDiff wrt current soln (added): "
+				 + randNeighb.getAdded()
+				 + ", \nDiff wrt current soln (removed): "
+				 + randNeighb.getRemoved()
+				 + ", \nType: "
+				 + randNeighb.getNeighbType().name()
+				 + ", \nSign: "
+				 + Arrays.toString(randNeighb.getSignatureCopy())
+				 + ", \nTemperature : "
+				 + Math.round(temperature * 100) / 100.0d
+				 + ", \nIteration : " + iter);
 
 				if (countCache.containsKey(sRecs)) {
 					int countNeighb = countCache.get(sRecs);
@@ -198,6 +216,7 @@ public class SimulAnnealWeighted extends Search {
 				}
 
 				double fnout = 0d;
+				StringBuilder sb= new StringBuilder();
 				// StringBuilder sb = new StringBuilder();
 				for (Objective weightedFn : weightedFns) {
 					double objOut = weightedFn.out(randNeighb, tgtDataset,
@@ -206,34 +225,34 @@ public class SimulAnnealWeighted extends Search {
 					
 					
 					// TODO: Removed this debugging.
-//					sb.append(weightedFn.getClass().getSimpleName()
-//							+ "(norm)[weight=" + weightedFn.getWeight()
-//							+ "] : " + objOut + " \n");
+					sb.append(weightedFn.getClass().getSimpleName()
+							+ "(norm)[weight=" + weightedFn.getWeight()
+							+ "] : " + objOut + " \n");
 
 					if (weightedFn.getClass().getSimpleName()
 							.equals("PrivacyObjective")) {
 						randNeighb.setPvtOut(objOut * weightedFn.getWeight());
 						
-//						sb.append(weightedFn.getClass().getSimpleName()
-//								+ " (unnorm) : " + (objOut * maxPvt) + " \n");
+						sb.append(weightedFn.getClass().getSimpleName()
+								+ " (unnorm) : " + (objOut * maxPvt) + " \n");
 					} else if (weightedFn.getClass().getSimpleName()
 							.equals("CleaningObjective")) {
 						randNeighb.setIndOut(objOut * weightedFn.getWeight());
-//						sb.append("Upper bound on ind : " + maxInd + " \n");
-//						sb.append(weightedFn.getClass().getSimpleName()
-//								+ " (unnorm) : " + (objOut * maxInd) + " \n");
+						sb.append("Upper bound on ind : " + maxInd + " \n");
+						sb.append(weightedFn.getClass().getSimpleName()
+								+ " (unnorm) : " + (objOut * maxInd) + " \n");
 					} else {
 						randNeighb.setChangesOut(objOut * weightedFn.getWeight());
-//						sb.append(weightedFn.getClass().getSimpleName()
-//								+ " (unnorm) : " + (objOut * recSize) + " \n");
+						sb.append(weightedFn.getClass().getSimpleName()
+								+ " (unnorm) : " + (objOut * recSize) + " \n");
 					}
 
 				}
-				// sb.append("Iteration : " + iter);
+				 sb.append("Iteration : " + iter);
 
-				// randNeighb.setDebugging(sb.toString());
-
-				// logger.log(DebugLevel.DEBUG, "Out : " + fnout);
+				 randNeighb.setDebugging(sb.toString());
+				 logger.log(ProdLevel.PROD, sb);
+				 logger.log(ProdLevel.PROD,"Out : " + fnout);
 
 				double newFnOut = fnout;
 
@@ -274,7 +293,7 @@ public class SimulAnnealWeighted extends Search {
 						// "Neighb is worse, DISCARD.");
 					}
 				}
-
+				logger.log(ProdLevel.PROD, "Best output : "+bestFnOut); 
 				// Keep track of the best soln.
 				if (Math.abs(newFnOut - bestFnOut) <= Config.FLOAT_EQUALIY_EPSILON) {
 					solns.add(randNeighb);
