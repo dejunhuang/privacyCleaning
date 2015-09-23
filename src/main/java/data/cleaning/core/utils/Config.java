@@ -116,7 +116,7 @@ public class Config {
 	public static final int NUM_STRINGS = 40;
 	public static final double DIM_REDUCTION = 0.9d;
 	public static final boolean SHOULD_APPROX_DIST = true;
-	public static final int TOP_K_MATCHES = 5;
+	public static final int TOP_K_MATCHES = 10;//5;
 	// This is to toggle the decision rule matching on and off. true = off.
 	public static final boolean SHOULD_AVERAGE = true;
 
