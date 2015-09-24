@@ -109,6 +109,15 @@ public class Candidate {
 			calcRecommendations();
 		} else {
 			// logger.log(ProdLevel.PROD, "Use cache");
+			
+			// clean null value in the list
+			List<Recommendation> cleanList = new ArrayList<Recommendation>();
+			for (Recommendation r: recommendations) {
+				if (r != null) {
+					cleanList.add(r);
+				}
+			}
+			this.recommendations = cleanList;
 		}
 
 		return recommendations;
