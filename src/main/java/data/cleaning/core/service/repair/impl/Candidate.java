@@ -113,6 +113,10 @@ public class Candidate {
 
 		return recommendations;
 	}
+	
+	public void setRecommendations (List<Recommendation> r) {
+		this.recommendations = r;
+	}
 
 	public char[] getSignature() {
 		return signature;
