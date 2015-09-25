@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import data.cleaning.core.service.dataset.DatasetService;
 import data.cleaning.core.service.dataset.impl.Constraint;
 import data.cleaning.core.service.dataset.impl.InfoContentTable;
 import data.cleaning.core.service.dataset.impl.MasterDataset;
@@ -16,6 +19,9 @@ import data.cleaning.core.service.matching.impl.Match;
 import data.cleaning.core.service.repair.impl.Candidate;
 import data.cleaning.core.service.repair.impl.Recommendation;
 import data.cleaning.core.utils.Pair;
+import data.cleaning.core.utils.ProdLevel;
+import data.cleaning.core.utils.objectives.IndNormStrategy;
+import data.cleaning.core.utils.objectives.Objective;
 
 /**
  * @author thomas
@@ -23,6 +29,14 @@ import data.cleaning.core.utils.Pair;
  * for small datasets using Brute Force Searching Algorithm
  */
 public class BruteForceSearch extends Search{
+	
+	private List<Objective> weightedFns;
+	private IndNormStrategy indNormStrat;
+	
+	public BruteForceSearch (List<Objective> weightedFns, IndNormStrategy indNormStrat) {
+		this.weightedFns = weightedFns;
+		this.indNormStrat = indNormStrat;
+	}
 
 	@Override
 	public Set<Candidate> calcOptimalSolns(Constraint constraint,
@@ -32,6 +46,8 @@ public class BruteForceSearch extends Search{
 		
 		List<Candidate> initCandidates = getInitCandidates (
 				constraint, tgtMatches, tgtDataset, mDataset);
+		
+		initCandidates = getCandidatesWithObjectiveScores(initCandidates, tgtDataset, mDataset, table, constraint, tgtMatches);
 		
 		Set<Candidate> candidatesSet = getSetCandidates (initCandidates);
 		return candidatesSet;
@@ -63,7 +79,7 @@ public class BruteForceSearch extends Search{
 		Map<Integer, Map<Integer, Choice>> positionToChoices = pInfo
 				.getPositionToChoices();
 		
-		System.out.println("positionToChoices: " + positionToChoices);
+//		System.out.println("positionToChoices: " + positionToChoices);
 		
 		// transfer from positionToChoices to List<Candidate>
 		Collection<Map<Integer, Choice>> choicesList = positionToChoices.values();
@@ -107,8 +123,50 @@ public class BruteForceSearch extends Search{
 			}
 		}
 		
-		
 		return candidates;
+	}
+	
+	// to calculate privacy loss, data cleaning utility and changes objective scores for candidates
+	private List<Candidate> getCandidatesWithObjectiveScores (
+			List<Candidate> can,
+			TargetDataset tgtDataset,
+			MasterDataset mDataset, 
+			InfoContentTable table,
+			Constraint constraint,
+			List<Match> tgtMatches) {
+		
+		double maxInd = calcMaxInd(constraint, tgtDataset.getRecords(),
+				indNormStrat);
+		double maxPvt = table.getMaxInfoContent();
+		
+		PositionalInfo pInfo = calcPositionalInfo(tgtMatches, mDataset,
+				constraint);
+		Map<Integer, Map<Integer, Choice>> positionToChoices = pInfo
+				.getPositionToChoices();
+		List<String> cols = constraint.getColsInConstraint();
+		int sigSize = positionToChoices.keySet().size() * cols.size();
+		long recSize = sigSize;
+		
+		for (Candidate c: can) {
+			for (Objective weightedFn : weightedFns) {
+				double wOut = weightedFn.out(c, tgtDataset, mDataset,
+						maxPvt, maxInd, recSize) * weightedFn.getWeight();
+				
+
+				if (weightedFn.getClass().getSimpleName()
+						.equals("PrivacyObjective")) {
+					c.setPvtOut(wOut);
+					
+				} else if (weightedFn.getClass().getSimpleName()
+						.equals("CleaningObjective")) {
+					c.setIndOut(wOut);
+				} else {
+					c.setChangesOut(wOut);
+				}
+			}
+		}
+		
+		return can;
 	}
 	
 	// get list of candidates from matches
