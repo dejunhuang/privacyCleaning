@@ -97,7 +97,7 @@ public class RepairServiceImpl implements RepairService {
 			c.setRecommendationPatterns(getRecommendationPatterns(c.getRecommendations(), tgtDataset, mDataset));
 		}
 
-		return null;
+		return candidatesSet;
 	}
 
 	@Override
