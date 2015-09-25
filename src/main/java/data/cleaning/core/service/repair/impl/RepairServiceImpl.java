@@ -149,5 +149,43 @@ public class RepairServiceImpl implements RepairService {
 
 		return orderedViolations;
 	}
+	
+	/**
+	 * Transfer a set of recommendations to a set of recommendation patterns
+	 * @param candidates
+	 * @return
+	 */
+	public List<RecommendationPattern> getRecommendationPatterns (List<Recommendation> recommendations,
+			TargetDataset t,
+			MasterDataset m) {
+		List<RecommendationPattern> rps = new ArrayList<RecommendationPattern>();
+		Set<Pair<String, String>> setPairs = new HashSet<>();
+		
+		for (Recommendation r: recommendations) {
+			RecommendationDetailed rd = new RecommendationDetailed(r, m, t);
+			//TODO: finding the recommendation pattern process can be improved
+			Pair<String, String> p = new Pair<>();
+			p.setO1(rd.gettVal());
+			p.setO2(rd.getmVal());
+			if (!setPairs.contains(p)) {
+				RecommendationPattern rp = new RecommendationPattern();
+				rp.setCol(rd.getCol());
+				rp.setmVal(rd.getmVal());
+				rp.settVal(rd.gettVal());
+				rp.addtId(rd.gettRid());
+				rps.add(rp);
+			}
+			else {
+				for (RecommendationPattern rp: rps) {
+					if (rp.getCol().equals(rd.getCol()) && rp.getmVal().equals(rd.getmVal()) && rp.gettVal().equals(rd.gettVal())) {
+						rp.addtId(rd.gettRid());
+						break;
+					}
+				}
+			}
+		}
+		
+		return rps;
+	}
 
 }
