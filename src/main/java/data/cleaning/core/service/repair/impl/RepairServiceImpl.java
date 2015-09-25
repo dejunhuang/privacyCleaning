@@ -89,9 +89,15 @@ public class RepairServiceImpl implements RepairService {
 			List<Match> tgtMatches, Search search, TargetDataset tgtDataset,
 			MasterDataset mDataset, InfoContentTable table,
 			boolean shdReturnInit) {
-
-		return search.calcOptimalSolns(constraint, tgtMatches, tgtDataset,
+		
+		Set<Candidate> candidatesSet =  search.calcOptimalSolns(constraint, tgtMatches, tgtDataset,
 				mDataset, table, shdReturnInit);
+		
+		for (Candidate c: candidatesSet) {
+			c.setRecommendationPatterns(getRecommendationPatterns(c.getRecommendations(), tgtDataset, mDataset));
+		}
+
+		return null;
 	}
 
 	@Override

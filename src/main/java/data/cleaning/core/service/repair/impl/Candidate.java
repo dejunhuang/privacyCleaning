@@ -20,6 +20,8 @@ public class Candidate {
 	// Below is used for hashcode and equals comparison. No nulls exist in this
 	// list.
 	private List<Recommendation> recommendations;
+	// list of Recommendation Patterns
+	private List<RecommendationPattern> recommendationPatterns;
 	// Below is used for neighbour generation. We cannot use "recommendations"
 	// for neighbour generation. Likewise, we cannot use "positionToRecs" for
 	// hashcode and equals because two different "positionToRecs" can have the
@@ -263,4 +265,13 @@ public class Candidate {
 		return tidToRecs;
 	}
 
+	public List<RecommendationPattern> getRecommendationPatterns() {
+		return recommendationPatterns;
+	}
+
+	public void setRecommendationPatterns(
+			List<RecommendationPattern> recommendationPatterns) {
+		this.recommendationPatterns = recommendationPatterns;
+	}
+	
 }
