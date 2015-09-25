@@ -37,6 +37,10 @@ public class RecommendationPattern {
 	public void addtId (long id) {
 		this.tIds.add(id);
 	}
+	
+	public Set<Long> gettIds () {
+		return this.tIds;
+	}
 
 	@Override
 	public String toString() {
