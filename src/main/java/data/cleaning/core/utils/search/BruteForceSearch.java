@@ -2,6 +2,7 @@ package data.cleaning.core.utils.search;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +169,33 @@ public class BruteForceSearch extends Search{
 		
 		return can;
 	}
+	
+	//TODO: To be finished
+	// get sorted list of candidates by the weighted scores
+//	private getSortedCandidates (List<Candidates> candidates) {
+//		Map<Candidate, Double> candidateScoreMap = new HashMap<>();
+//		
+//		for (Candidate can: candidates) {
+//			double overallScore = 0.0;
+//			for (Objective weightedFn : weightedFns) {
+//				double temp;
+//				if (weightedFn.getClass().getSimpleName()
+//						.equals("PrivacyObjective")) {
+//					temp = can.getPvtOut() * weightedFn.getWeight();
+//					
+//				} else if (weightedFn.getClass().getSimpleName()
+//						.equals("CleaningObjective")) {
+//					temp = can.getIndOut() * weightedFn.getWeight();
+//				} else {
+//					temp = can.getChangesOut() * weightedFn.getWeight();
+//				}
+//				overallScore += temp;
+//			}
+//			candidateScoreMap.put(can, overallScore);
+//		}
+//		
+//		
+//	}
 	
 	// get list of candidates from matches
 	// use customized method to calculate Candidates

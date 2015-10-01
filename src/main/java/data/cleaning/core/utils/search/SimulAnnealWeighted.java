@@ -52,8 +52,8 @@ public class SimulAnnealWeighted extends Search {
 			List<Match> tgtMatches, TargetDataset tgtDataset,
 			MasterDataset mDataset, InfoContentTable table,
 			boolean shdReturnInit) {
-		logger.log(ProdLevel.PROD, "\n\nPvt table : "
-				 + table.toString());
+//		logger.log(ProdLevel.PROD, "\n\nPvt table : "
+//				 + table.toString());
 		int numIter = (int) Math.ceil(Math.log(finalTemperature
 				/ initTemperature)
 				/ Math.log(alpha));
@@ -137,11 +137,11 @@ public class SimulAnnealWeighted extends Search {
 			}
 			
 			currentFnOut += wOut;
-			logger.log(ProdLevel.PROD,weightedFn.getClass() + ", Out : " + wOut);
+//			logger.log(ProdLevel.PROD,weightedFn.getClass() + ", Out : " + wOut);
 		}
 		bestFnOut = currentFnOut;
 
-		logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
+//		logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
 
 		// How many worse solutions are accepted throughout this process?
 		int accepted = 0;
@@ -153,6 +153,7 @@ public class SimulAnnealWeighted extends Search {
 			if (currentFnOut <= bestEnergy) {
 				logger.log(ProdLevel.PROD, "Best energy (" + bestEnergy
 						+ ") was reached.");
+				logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
 				return solns;
 			}
 
@@ -180,20 +181,20 @@ public class SimulAnnealWeighted extends Search {
 				if (sRecs.isEmpty())
 					continue;
 
-				logger.log(ProdLevel.PROD,
-				 "\nNeighb: "
-				 + sRecs
-				 + ", \nDiff wrt current soln (added): "
-				 + randNeighb.getAdded()
-				 + ", \nDiff wrt current soln (removed): "
-				 + randNeighb.getRemoved()
-				 + ", \nType: "
-				 + randNeighb.getNeighbType().name()
-				 + ", \nSign: "
-				 + Arrays.toString(randNeighb.getSignatureCopy())
-				 + ", \nTemperature : "
-				 + Math.round(temperature * 100) / 100.0d
-				 + ", \nIteration : " + iter);
+//				logger.log(ProdLevel.PROD,
+//				 "\nNeighb: "
+//				 + sRecs
+//				 + ", \nDiff wrt current soln (added): "
+//				 + randNeighb.getAdded()
+//				 + ", \nDiff wrt current soln (removed): "
+//				 + randNeighb.getRemoved()
+//				 + ", \nType: "
+//				 + randNeighb.getNeighbType().name()
+//				 + ", \nSign: "
+//				 + Arrays.toString(randNeighb.getSignatureCopy())
+//				 + ", \nTemperature : "
+//				 + Math.round(temperature * 100) / 100.0d
+//				 + ", \nIteration : " + iter);
 
 				if (countCache.containsKey(sRecs)) {
 					int countNeighb = countCache.get(sRecs);
@@ -251,8 +252,8 @@ public class SimulAnnealWeighted extends Search {
 				 sb.append("Iteration : " + iter);
 
 				 randNeighb.setDebugging(sb.toString());
-				 logger.log(ProdLevel.PROD, sb);
-				 logger.log(ProdLevel.PROD,"Out : " + fnout);
+//				 logger.log(ProdLevel.PROD, sb);
+//				 logger.log(ProdLevel.PROD,"Out : " + fnout);
 
 				double newFnOut = fnout;
 
@@ -293,7 +294,7 @@ public class SimulAnnealWeighted extends Search {
 						// "Neighb is worse, DISCARD.");
 					}
 				}
-				logger.log(ProdLevel.PROD, "Best output : "+bestFnOut); 
+//				logger.log(ProdLevel.PROD, "Best output : "+bestFnOut); 
 				// Keep track of the best soln.
 				if (Math.abs(newFnOut - bestFnOut) <= Config.FLOAT_EQUALIY_EPSILON) {
 					solns.add(randNeighb);
@@ -313,6 +314,8 @@ public class SimulAnnealWeighted extends Search {
 		if (solns.isEmpty()) {
 			solns.add(initialSoln);
 		}
+		
+//		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
 
 		return solns;
 	}

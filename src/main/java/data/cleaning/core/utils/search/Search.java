@@ -1062,8 +1062,8 @@ public abstract class Search {
 		
 		
 
-		logger.log(ProdLevel.PROD, "\n\n" + strategy + ", Initial soln : "
-				+ initialSoln.getRecommendations());
+//		logger.log(ProdLevel.PROD, "\n\n" + strategy + ", Initial soln : "
+//				+ initialSoln.getRecommendations());
 
 		return initialSoln;
 	}
