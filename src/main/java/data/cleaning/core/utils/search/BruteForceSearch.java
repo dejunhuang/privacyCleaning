@@ -2,6 +2,8 @@ package data.cleaning.core.utils.search;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,8 +52,34 @@ public class BruteForceSearch extends Search{
 		
 		initCandidates = getCandidatesWithObjectiveScores(initCandidates, tgtDataset, mDataset, table, constraint, tgtMatches);
 		
+		initCandidates = getSortedCandidates(initCandidates);
+		
 		Set<Candidate> candidatesSet = getSetCandidates (initCandidates);
 		return candidatesSet;
+	}
+	
+	/**
+	 * get sorted solns on overal scores
+	 * @param constraint
+	 * @param tgtMatches
+	 * @param tgtDataset
+	 * @param mDataset
+	 * @param table
+	 * @param shdReturnInit
+	 * @return
+	 */
+	public List<Candidate> getSortedSolns(Constraint constraint,
+			List<Match> tgtMatches, TargetDataset tgtDataset,
+			MasterDataset mDataset, InfoContentTable table,
+			boolean shdReturnInit) {
+		
+		List<Candidate> initCandidates = getInitCandidates (
+				constraint, tgtMatches, tgtDataset, mDataset);
+		
+		initCandidates = getCandidatesWithObjectiveScores(initCandidates, tgtDataset, mDataset, table, constraint, tgtMatches);
+		initCandidates = getSortedCandidates(initCandidates);
+		
+		return initCandidates;
 	}
 	
 	// get all the possible candidates according to the matches
@@ -172,30 +200,50 @@ public class BruteForceSearch extends Search{
 	
 	//TODO: To be finished
 	// get sorted list of candidates by the weighted scores
-//	private getSortedCandidates (List<Candidates> candidates) {
-//		Map<Candidate, Double> candidateScoreMap = new HashMap<>();
-//		
-//		for (Candidate can: candidates) {
-//			double overallScore = 0.0;
-//			for (Objective weightedFn : weightedFns) {
-//				double temp;
-//				if (weightedFn.getClass().getSimpleName()
-//						.equals("PrivacyObjective")) {
-//					temp = can.getPvtOut() * weightedFn.getWeight();
-//					
-//				} else if (weightedFn.getClass().getSimpleName()
-//						.equals("CleaningObjective")) {
-//					temp = can.getIndOut() * weightedFn.getWeight();
-//				} else {
-//					temp = can.getChangesOut() * weightedFn.getWeight();
-//				}
-//				overallScore += temp;
-//			}
-//			candidateScoreMap.put(can, overallScore);
-//		}
-//		
-//		
-//	}
+	private List<Candidate> getSortedCandidates (List<Candidate> candidates) {
+		List<CandidateWithScore> candidatesWithScore = new ArrayList<CandidateWithScore>();
+		
+		for (Candidate can: candidates) {
+			double overallScore = 0.0;
+			for (Objective weightedFn : weightedFns) {
+				double temp;
+				if (weightedFn.getClass().getSimpleName()
+						.equals("PrivacyObjective")) {
+					temp = can.getPvtOut() * weightedFn.getWeight();
+					
+				} else if (weightedFn.getClass().getSimpleName()
+						.equals("CleaningObjective")) {
+					temp = can.getIndOut() * weightedFn.getWeight();
+				} else {
+					temp = can.getChangesOut() * weightedFn.getWeight();
+				}
+				overallScore += temp;
+			}
+			CandidateWithScore candidateWithScore = new CandidateWithScore();
+			candidateWithScore.setCandidate(can);
+			candidateWithScore.setOverallScore(overallScore);
+			candidatesWithScore.add(candidateWithScore);
+		}
+		
+		Collections.sort(candidatesWithScore, new Comparator<CandidateWithScore>(){
+			@Override
+		    public int compare(CandidateWithScore c1, CandidateWithScore c2) {
+		        if (c1.getOverallScore() > c2.getOverallScore()) {
+		        	return 1;
+		        }
+		        else {
+		        	return 0;
+		        }
+		    }
+		});
+		
+		List<Candidate> candidatesResult = new ArrayList<Candidate>();
+		for (CandidateWithScore cTemp: candidatesWithScore) {
+			candidatesResult.add(cTemp.getCandidate());
+		}
+		
+		return candidatesResult;
+	}
 	
 	// get list of candidates from matches
 	// use customized method to calculate Candidates
@@ -270,6 +318,25 @@ public class BruteForceSearch extends Search{
 		}
 		
 		return candidatesSet;
+	}
+	
+	// this class is for sorting Candidates by overallScore
+	private class CandidateWithScore {
+		private Candidate candidate;
+		private double overallScore;
+		
+		public Candidate getCandidate() {
+			return candidate;
+		}
+		public void setCandidate(Candidate candidate) {
+			this.candidate = candidate;
+		}
+		public double getOverallScore() {
+			return overallScore;
+		}
+		public void setOverallScore(double overallScore) {
+			this.overallScore = overallScore;
+		}
 	}
 
 }
