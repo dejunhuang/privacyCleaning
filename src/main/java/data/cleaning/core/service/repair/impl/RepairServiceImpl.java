@@ -94,7 +94,10 @@ public class RepairServiceImpl implements RepairService {
 				mDataset, table, shdReturnInit);
 		
 		for (Candidate c: candidatesSet) {
+//			logger.log(ProdLevel.PROD, "--------------------------------------\n");
+//			logger.log(ProdLevel.PROD, "Candidate: " + c.toString() + "\n");
 			c.setRecommendationPatterns(getRecommendationPatterns(c.getRecommendations(), tgtDataset, mDataset));
+//			logger.log(ProdLevel.PROD, "Candidate Pattern: " + c.getRecommendationPatterns().toString() + "\n");
 		}
 
 		return candidatesSet;
@@ -180,6 +183,7 @@ public class RepairServiceImpl implements RepairService {
 				rp.settVal(rd.gettVal());
 				rp.addtId(rd.gettRid());
 				rps.add(rp);
+				setPairs.add(p);
 			}
 			else {
 				for (RecommendationPattern rp: rps) {
