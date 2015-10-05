@@ -1,10 +1,12 @@
 package data.cleaning.core.utils.search;
 
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.MinMaxPriorityQueue;
 
 import data.cleaning.core.service.dataset.impl.Constraint;
 import data.cleaning.core.service.dataset.impl.InfoContentTable;
@@ -27,6 +29,8 @@ public class SimulAnnealWeighted extends Search {
 	final private List<Objective> weightedFns;
 	final private InitStrategy strategy;
 	final private IndNormStrategy indNormStrat;
+	private MinMaxPriorityQueue<Candidate> topK;
+	private static final int TOP_K = 10000;
 
 	public SimulAnnealWeighted(List<Objective> weightedFns, double initTemp,
 			double finalTemperature, double alpha, double bestEnergy,
@@ -38,12 +42,307 @@ public class SimulAnnealWeighted extends Search {
 		this.bestEnergy = bestEnergy;
 		this.strategy = strategy;
 		this.indNormStrat = indNormStrat;
+		this.topK = MinMaxPriorityQueue.orderedBy(new Comparator<Candidate>() {
+
+			@Override
+			public int compare(Candidate o1, Candidate o2) {
+				return Double.compare(o1.getOutput(), o2.getOutput());
+			}
+		}).maximumSize(TOP_K).create();
 	}
 
 	public List<Objective> getWeightedFns() {
 		return weightedFns;
 	}
 
+//	Back up the original code
+//	/*
+//	 * More than 1 solution can be found.
+//	 */
+//	@Override
+//	public Set<Candidate> calcOptimalSolns(Constraint constraint,
+//			List<Match> tgtMatches, TargetDataset tgtDataset,
+//			MasterDataset mDataset, InfoContentTable table,
+//			boolean shdReturnInit) {
+//		// logger.log(ProdLevel.PROD, "\n\nPvt table : "
+//		// + table.toString());
+//		int numIter = (int) Math.ceil(Math.log(finalTemperature
+//				/ initTemperature)
+//				/ Math.log(alpha));
+//
+//		// logger.log(ProdLevel.PROD, "\n\nTheoretically max iterations : "
+//		// + numIter);
+//
+//		// LoadingCache<List<Recommendation>, Integer> countCache = CacheBuilder
+//		// .newBuilder().maximumSize(100)
+//		// .expireAfterAccess(1, TimeUnit.SECONDS)
+//		// .build(new CacheLoader<List<Recommendation>, Integer>() {
+//		// public Integer load(List<Recommendation> recs) {
+//		// return backupCache.get(recs);
+//		// }
+//		// });
+//
+//		double temperature = initTemperature;
+//
+//		Set<Candidate> solns = new HashSet<>();
+//		double maxInd = calcMaxInd(constraint, tgtDataset.getRecords(),
+//				indNormStrat);
+//		double maxPvt = table.getMaxInfoContent();
+//		PositionalInfo pInfo = calcPositionalInfo(tgtMatches, mDataset,
+//				constraint);
+//		Map<Integer, Map<Integer, Choice>> positionToChoices = pInfo
+//				.getPositionToChoices();
+//
+//		List<String> cols = constraint.getColsInConstraint();
+//
+//		int sigSize = positionToChoices.keySet().size() * cols.size();
+//		long recSize = sigSize;
+//
+//		if (sigSize <= 0)
+//			return null;
+//
+//		int numBitFlipNeighb = sigSize;
+//
+//		int numChoiceNeighb = 0;
+//
+//		for (Map<Integer, Choice> choice : positionToChoices.values()) {
+//			numChoiceNeighb += choice.size() - 1;
+//		}
+//
+//		logger.log(ProdLevel.PROD, "\n\nNum neighbours : "
+//				+ (numBitFlipNeighb + numChoiceNeighb));
+//
+//		Candidate currentSoln = getInitialSoln(strategy, sigSize,
+//				positionToChoices, pInfo.getPositionToExactMatch(),
+//				pInfo.getTidToPosition());
+//
+//		if (shdReturnInit) {
+//			solns.add(currentSoln);
+//			return solns;
+//		}
+//
+//		List<Recommendation> currentSolnRecs = currentSoln.getRecommendations();
+//
+//		if (currentSoln == null || currentSolnRecs == null
+//				|| currentSolnRecs.isEmpty())
+//			return null;
+//
+//		Candidate initialSoln = currentSoln;
+//
+//		double bestFnOut = Double.MAX_VALUE;
+//		double currentFnOut = 0d;
+//
+//		for (Objective weightedFn : weightedFns) {
+//			double wOut = weightedFn.out(currentSoln, tgtDataset, mDataset,
+//					maxPvt, maxInd, recSize) * weightedFn.getWeight();
+//
+//			if (weightedFn.getClass().getSimpleName()
+//					.equals("PrivacyObjective")) {
+//				initialSoln.setPvtOut(wOut);
+//
+//			} else if (weightedFn.getClass().getSimpleName()
+//					.equals("CleaningObjective")) {
+//				initialSoln.setIndOut(wOut);
+//			} else {
+//				initialSoln.setChangesOut(wOut);
+//			}
+//
+//			currentFnOut += wOut;
+//			// logger.log(ProdLevel.PROD,weightedFn.getClass() + ", Out : " +
+//			// wOut);
+//		}
+//		initialSoln.setOutput(currentFnOut);
+//		bestFnOut = currentFnOut;
+//
+//		// logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
+//
+//		// How many worse solutions are accepted throughout this process?
+//		int accepted = 0;
+//		int allWorse = 0;
+//		int iter = 0;
+//		while (temperature > finalTemperature) {
+//			iter++;
+//
+//			if (currentFnOut <= bestEnergy) {
+//				logger.log(ProdLevel.PROD, "Best energy (" + bestEnergy
+//						+ ") was reached.");
+//				logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
+//				return solns;
+//			}
+//
+//			// List<Candidate> neighbs = new ArrayList<>(getNeighbs(currentSoln,
+//			// positionToChoices));
+//			// if (neighbs.isEmpty())
+//			// break;
+//			// Steps per temp in order to stabilize the solutions.
+//			for (int step = 0; step < Config.STEPS_PER_TEMP; step++) {
+//				// int randNum = rand.nextInt(neighbs.size());
+//				// Candidate randNeighb = neighbs.get(randNum);
+//				// logger.log(SecurityLevel.PROD,
+//				// "Tot neighb : " + neighbs.size());
+//				// logger.log(SecurityLevel.PROD, "Neighb num : " +
+//				// randNum);
+//
+//				Candidate randNeighb = getRandNeighb(numBitFlipNeighb,
+//						numChoiceNeighb, currentSoln, positionToChoices);
+//
+//				if (randNeighb == null)
+//					break;
+//
+//				List<Recommendation> sRecs = randNeighb.getRecommendations();
+//
+//				if (sRecs.isEmpty())
+//					continue;
+//
+//				// logger.log(ProdLevel.PROD,
+//				// "\nNeighb: "
+//				// + sRecs
+//				// + ", \nDiff wrt current soln (added): "
+//				// + randNeighb.getAdded()
+//				// + ", \nDiff wrt current soln (removed): "
+//				// + randNeighb.getRemoved()
+//				// + ", \nType: "
+//				// + randNeighb.getNeighbType().name()
+//				// + ", \nSign: "
+//				// + Arrays.toString(randNeighb.getSignatureCopy())
+//				// + ", \nTemperature : "
+//				// + Math.round(temperature * 100) / 100.0d
+//				// + ", \nIteration : " + iter);
+//
+//				if (countCache.containsKey(sRecs)) {
+//					int countNeighb = countCache.get(sRecs);
+//
+//					if (countNeighb + 1 > Config.SA_REPEAT_NEIGHB_THRESHOLD) {
+//						logger.log(ProdLevel.PROD, "Same neighb " + randNeighb
+//								+ " was seen "
+//								+ Config.SA_REPEAT_NEIGHB_THRESHOLD
+//								+ " times. Terminating.");
+//						// Just return something.
+//						if (solns.isEmpty()) {
+//							solns.add(initialSoln);
+//						}
+//						return solns;
+//					} else {
+//						countCache.put(sRecs, countNeighb + 1);
+//					}
+//				} else {
+//					countCache.put(sRecs, 1);
+//				}
+//
+//				double fnout = 0d;
+//				StringBuilder sb = new StringBuilder();
+//				// StringBuilder sb = new StringBuilder();
+//				for (Objective weightedFn : weightedFns) {
+//					double objOut = weightedFn.out(randNeighb, tgtDataset,
+//							mDataset, maxPvt, maxInd, recSize);
+//					fnout += objOut * weightedFn.getWeight();
+//
+//					// TODO: Removed this debugging.
+//					sb.append(weightedFn.getClass().getSimpleName()
+//							+ "(norm)[weight=" + weightedFn.getWeight()
+//							+ "] : " + objOut + " \n");
+//
+//					if (weightedFn.getClass().getSimpleName()
+//							.equals("PrivacyObjective")) {
+//						randNeighb.setPvtOut(objOut * weightedFn.getWeight());
+//
+//						sb.append(weightedFn.getClass().getSimpleName()
+//								+ " (unnorm) : " + (objOut * maxPvt) + " \n");
+//					} else if (weightedFn.getClass().getSimpleName()
+//							.equals("CleaningObjective")) {
+//						randNeighb.setIndOut(objOut * weightedFn.getWeight());
+//						sb.append("Upper bound on ind : " + maxInd + " \n");
+//						sb.append(weightedFn.getClass().getSimpleName()
+//								+ " (unnorm) : " + (objOut * maxInd) + " \n");
+//					} else {
+//						randNeighb.setChangesOut(objOut
+//								* weightedFn.getWeight());
+//						sb.append(weightedFn.getClass().getSimpleName()
+//								+ " (unnorm) : " + (objOut * recSize) + " \n");
+//					}
+//
+//				}
+//				sb.append("Iteration : " + iter);
+//
+//				randNeighb.setDebugging(sb.toString());
+//				// logger.log(ProdLevel.PROD, sb);
+//				// logger.log(ProdLevel.PROD,"Out : " + fnout);
+//
+//				double newFnOut = fnout;
+//				randNeighb.setOutput(newFnOut);
+//				double delta = currentFnOut - newFnOut;
+//
+//				if (Math.abs(delta) <= Config.FLOAT_EQUALIY_EPSILON
+//						|| delta > 0) {
+//					currentFnOut = newFnOut;
+//					currentSoln = randNeighb;
+//
+//					if (Math.abs(delta) <= Config.FLOAT_EQUALIY_EPSILON) {
+//						// logger.log(DebugLevel.DEBUG,
+//						// "Neighb is equally good.");
+//					} else {
+//						// logger.log(DebugLevel.DEBUG, "Neighb is better.");
+//					}
+//
+//				} else {
+//
+//					allWorse++;
+//					double randomTest = rand.nextDouble();
+//					double acceptanceProb = Math.exp(delta / temperature);
+//					// if exp ( dE/T ) > k then accept worse solution
+//					if (acceptanceProb > randomTest) {
+//						// increase "worse solutions accepted" counter
+//						accepted++;
+//
+//						currentFnOut = newFnOut;
+//						currentSoln = randNeighb;
+//
+//						// logger.log(DebugLevel.DEBUG,
+//						// "Neighb is worse, but ACCEPT.");
+//
+//					} else {
+//						currentSoln.setShdReverseInd(true);
+//
+//						// logger.log(DebugLevel.DEBUG,
+//						// "Neighb is worse, DISCARD.");
+//					}
+//				}
+//				// logger.log(ProdLevel.PROD, "Best output : "+bestFnOut);
+//				// Keep track of the best soln.
+//				if (Math.abs(newFnOut - bestFnOut) <= Config.FLOAT_EQUALIY_EPSILON) {
+//					solns.add(randNeighb);
+//				} else if (newFnOut < bestFnOut) {
+//					bestFnOut = newFnOut;
+//					solns.removeAll(solns);
+//					solns.add(randNeighb);
+//				}
+//			}
+//
+//			topK.offer(currentSoln);
+//			temperature = temperature * alpha;
+//		}
+//
+//		logger.log(ProdLevel.PROD, "\n\nTot worse solns : " + allWorse
+//				+ ", Accepted worse solns : " + accepted);
+//
+//		if (solns.isEmpty()) {
+//			solns.add(initialSoln);
+//		}
+//
+////		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
+//		
+//		logger.log(ProdLevel.PROD, "\n\nTOP K : ");
+//		for (Candidate c: topK) {
+//			logger.log(ProdLevel.PROD, 
+//					"Pvt: " + c.getPvtOut() + 
+//					", InD: " + c.getIndOut() + 
+//					", changes: " + c.getChangesOut() + 
+//					", All: " + c.getOutput() + "\n");
+//		}
+//		
+//		return solns;
+//	}
+	
 	/*
 	 * More than 1 solution can be found.
 	 */
@@ -52,8 +351,8 @@ public class SimulAnnealWeighted extends Search {
 			List<Match> tgtMatches, TargetDataset tgtDataset,
 			MasterDataset mDataset, InfoContentTable table,
 			boolean shdReturnInit) {
-//		logger.log(ProdLevel.PROD, "\n\nPvt table : "
-//				 + table.toString());
+		// logger.log(ProdLevel.PROD, "\n\nPvt table : "
+		// + table.toString());
 		int numIter = (int) Math.ceil(Math.log(finalTemperature
 				/ initTemperature)
 				/ Math.log(alpha));
@@ -73,6 +372,7 @@ public class SimulAnnealWeighted extends Search {
 		double temperature = initTemperature;
 
 		Set<Candidate> solns = new HashSet<>();
+		Set<Candidate> newSolns = new HashSet<>();
 		double maxInd = calcMaxInd(constraint, tgtDataset.getRecords(),
 				indNormStrat);
 		double maxPvt = table.getMaxInfoContent();
@@ -123,25 +423,26 @@ public class SimulAnnealWeighted extends Search {
 		for (Objective weightedFn : weightedFns) {
 			double wOut = weightedFn.out(currentSoln, tgtDataset, mDataset,
 					maxPvt, maxInd, recSize) * weightedFn.getWeight();
-			
 
 			if (weightedFn.getClass().getSimpleName()
 					.equals("PrivacyObjective")) {
 				initialSoln.setPvtOut(wOut);
-				
+
 			} else if (weightedFn.getClass().getSimpleName()
 					.equals("CleaningObjective")) {
 				initialSoln.setIndOut(wOut);
 			} else {
 				initialSoln.setChangesOut(wOut);
 			}
-			
+
 			currentFnOut += wOut;
-//			logger.log(ProdLevel.PROD,weightedFn.getClass() + ", Out : " + wOut);
+			// logger.log(ProdLevel.PROD,weightedFn.getClass() + ", Out : " +
+			// wOut);
 		}
+		initialSoln.setOutput(currentFnOut);
 		bestFnOut = currentFnOut;
 
-//		logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
+		// logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
 
 		// How many worse solutions are accepted throughout this process?
 		int accepted = 0;
@@ -181,20 +482,20 @@ public class SimulAnnealWeighted extends Search {
 				if (sRecs.isEmpty())
 					continue;
 
-//				logger.log(ProdLevel.PROD,
-//				 "\nNeighb: "
-//				 + sRecs
-//				 + ", \nDiff wrt current soln (added): "
-//				 + randNeighb.getAdded()
-//				 + ", \nDiff wrt current soln (removed): "
-//				 + randNeighb.getRemoved()
-//				 + ", \nType: "
-//				 + randNeighb.getNeighbType().name()
-//				 + ", \nSign: "
-//				 + Arrays.toString(randNeighb.getSignatureCopy())
-//				 + ", \nTemperature : "
-//				 + Math.round(temperature * 100) / 100.0d
-//				 + ", \nIteration : " + iter);
+				// logger.log(ProdLevel.PROD,
+				// "\nNeighb: "
+				// + sRecs
+				// + ", \nDiff wrt current soln (added): "
+				// + randNeighb.getAdded()
+				// + ", \nDiff wrt current soln (removed): "
+				// + randNeighb.getRemoved()
+				// + ", \nType: "
+				// + randNeighb.getNeighbType().name()
+				// + ", \nSign: "
+				// + Arrays.toString(randNeighb.getSignatureCopy())
+				// + ", \nTemperature : "
+				// + Math.round(temperature * 100) / 100.0d
+				// + ", \nIteration : " + iter);
 
 				if (countCache.containsKey(sRecs)) {
 					int countNeighb = countCache.get(sRecs);
@@ -217,14 +518,13 @@ public class SimulAnnealWeighted extends Search {
 				}
 
 				double fnout = 0d;
-				StringBuilder sb= new StringBuilder();
+				StringBuilder sb = new StringBuilder();
 				// StringBuilder sb = new StringBuilder();
 				for (Objective weightedFn : weightedFns) {
 					double objOut = weightedFn.out(randNeighb, tgtDataset,
 							mDataset, maxPvt, maxInd, recSize);
 					fnout += objOut * weightedFn.getWeight();
-					
-					
+
 					// TODO: Removed this debugging.
 					sb.append(weightedFn.getClass().getSimpleName()
 							+ "(norm)[weight=" + weightedFn.getWeight()
@@ -233,7 +533,7 @@ public class SimulAnnealWeighted extends Search {
 					if (weightedFn.getClass().getSimpleName()
 							.equals("PrivacyObjective")) {
 						randNeighb.setPvtOut(objOut * weightedFn.getWeight());
-						
+
 						sb.append(weightedFn.getClass().getSimpleName()
 								+ " (unnorm) : " + (objOut * maxPvt) + " \n");
 					} else if (weightedFn.getClass().getSimpleName()
@@ -243,21 +543,24 @@ public class SimulAnnealWeighted extends Search {
 						sb.append(weightedFn.getClass().getSimpleName()
 								+ " (unnorm) : " + (objOut * maxInd) + " \n");
 					} else {
-						randNeighb.setChangesOut(objOut * weightedFn.getWeight());
+						randNeighb.setChangesOut(objOut
+								* weightedFn.getWeight());
 						sb.append(weightedFn.getClass().getSimpleName()
 								+ " (unnorm) : " + (objOut * recSize) + " \n");
 					}
 
 				}
-				 sb.append("Iteration : " + iter);
+				sb.append("Iteration : " + iter);
 
-				 randNeighb.setDebugging(sb.toString());
-//				 logger.log(ProdLevel.PROD, sb);
-//				 logger.log(ProdLevel.PROD,"Out : " + fnout);
+				randNeighb.setDebugging(sb.toString());
+				// logger.log(ProdLevel.PROD, sb);
+				// logger.log(ProdLevel.PROD,"Out : " + fnout);
 
 				double newFnOut = fnout;
-
+				randNeighb.setOutput(newFnOut);
 				double delta = currentFnOut - newFnOut;
+				
+				topK.offer(randNeighb);
 
 				if (Math.abs(delta) <= Config.FLOAT_EQUALIY_EPSILON
 						|| delta > 0) {
@@ -294,7 +597,7 @@ public class SimulAnnealWeighted extends Search {
 						// "Neighb is worse, DISCARD.");
 					}
 				}
-//				logger.log(ProdLevel.PROD, "Best output : "+bestFnOut); 
+				// logger.log(ProdLevel.PROD, "Best output : "+bestFnOut);
 				// Keep track of the best soln.
 				if (Math.abs(newFnOut - bestFnOut) <= Config.FLOAT_EQUALIY_EPSILON) {
 					solns.add(randNeighb);
@@ -305,6 +608,7 @@ public class SimulAnnealWeighted extends Search {
 				}
 			}
 
+//			topK.offer(currentSoln);
 			temperature = temperature * alpha;
 		}
 
@@ -314,10 +618,28 @@ public class SimulAnnealWeighted extends Search {
 		if (solns.isEmpty()) {
 			solns.add(initialSoln);
 		}
-		
-//		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
 
-		return solns;
+//		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
+		
+		logger.log(ProdLevel.PROD, "\n\nTOP K : ");
+		int counter = 0;
+		
+		int COUNTER_DISTANCE = 50;
+		
+		for (Candidate c: topK) {
+			if (counter % COUNTER_DISTANCE == 0) {
+				newSolns.add(c);
+				logger.log(ProdLevel.PROD, 
+						"Pvt: " + c.getPvtOut() + 
+						", InD: " + c.getIndOut() + 
+						", changes: " + c.getChangesOut() + 
+						", All: " + c.getOutput() + "\n");
+			}
+			counter ++;
+		}
+		
+//		return solns;
+		return newSolns;
 	}
 
 }

@@ -53,6 +53,8 @@ public class Candidate {
 	private double indOut;
 	private double changesOut;
 
+	private double output;
+
 	// Can be any random debugging info.
 	private String debugging;
 	private static final Logger logger = Logger.getLogger(Candidate.class);
@@ -111,10 +113,10 @@ public class Candidate {
 			calcRecommendations();
 		} else {
 			// logger.log(ProdLevel.PROD, "Use cache");
-			
+
 			// clean null value in the list
 			List<Recommendation> cleanList = new ArrayList<Recommendation>();
-			for (Recommendation r: recommendations) {
+			for (Recommendation r : recommendations) {
 				if (r != null) {
 					cleanList.add(r);
 				}
@@ -124,8 +126,8 @@ public class Candidate {
 
 		return recommendations;
 	}
-	
-	public void setRecommendations (List<Recommendation> r) {
+
+	public void setRecommendations(List<Recommendation> r) {
 		this.recommendations = r;
 	}
 
@@ -171,6 +173,14 @@ public class Candidate {
 
 	public void setNeighbType(NeighbourType neighbType) {
 		this.neighbType = neighbType;
+	}
+
+	public double getOutput() {
+		return output;
+	}
+
+	public void setOutput(double output) {
+		this.output = output;
 	}
 
 	@Override
@@ -273,5 +283,5 @@ public class Candidate {
 			List<RecommendationPattern> recommendationPatterns) {
 		this.recommendationPatterns = recommendationPatterns;
 	}
-	
+
 }
