@@ -388,6 +388,10 @@ public class SimulAnnealWeighted extends Search {
 
 		if (sigSize <= 0)
 			return null;
+		
+		logger.log(ProdLevel.PROD, "maxInd : "+ maxInd);
+		logger.log(ProdLevel.PROD, "maxPvt : "+ maxPvt);
+		logger.log(ProdLevel.PROD, "maxChanges : "+ recSize);
 
 		int numBitFlipNeighb = sigSize;
 
@@ -423,16 +427,19 @@ public class SimulAnnealWeighted extends Search {
 		for (Objective weightedFn : weightedFns) {
 			double wOut = weightedFn.out(currentSoln, tgtDataset, mDataset,
 					maxPvt, maxInd, recSize) * weightedFn.getWeight();
+			
+			double score = weightedFn.out(currentSoln, tgtDataset, mDataset,
+					maxPvt, maxInd, recSize);
 
 			if (weightedFn.getClass().getSimpleName()
 					.equals("PrivacyObjective")) {
-				initialSoln.setPvtOut(wOut);
+				initialSoln.setPvtOut(score);
 
 			} else if (weightedFn.getClass().getSimpleName()
 					.equals("CleaningObjective")) {
-				initialSoln.setIndOut(wOut);
+				initialSoln.setIndOut(score);
 			} else {
-				initialSoln.setChangesOut(wOut);
+				initialSoln.setChangesOut(score);
 			}
 
 			currentFnOut += wOut;
@@ -532,19 +539,18 @@ public class SimulAnnealWeighted extends Search {
 
 					if (weightedFn.getClass().getSimpleName()
 							.equals("PrivacyObjective")) {
-						randNeighb.setPvtOut(objOut * weightedFn.getWeight());
+						randNeighb.setPvtOut(objOut);
 
 						sb.append(weightedFn.getClass().getSimpleName()
 								+ " (unnorm) : " + (objOut * maxPvt) + " \n");
 					} else if (weightedFn.getClass().getSimpleName()
 							.equals("CleaningObjective")) {
-						randNeighb.setIndOut(objOut * weightedFn.getWeight());
+						randNeighb.setIndOut(objOut);
 						sb.append("Upper bound on ind : " + maxInd + " \n");
 						sb.append(weightedFn.getClass().getSimpleName()
 								+ " (unnorm) : " + (objOut * maxInd) + " \n");
 					} else {
-						randNeighb.setChangesOut(objOut
-								* weightedFn.getWeight());
+						randNeighb.setChangesOut(objOut);
 						sb.append(weightedFn.getClass().getSimpleName()
 								+ " (unnorm) : " + (objOut * recSize) + " \n");
 					}
@@ -621,12 +627,11 @@ public class SimulAnnealWeighted extends Search {
 
 //		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
 		
-		logger.log(ProdLevel.PROD, "\n\nTOP K : ");
+		logger.log(ProdLevel.PROD, "\n\nTOP K : " + "Size: " + topK.size() + "\n");
 		int counter = 0;
-		
-		int COUNTER_DISTANCE = 50;
-		
-		for (Candidate c: topK) {
+		int COUNTER_DISTANCE = 100;
+		Candidate c;
+		while ((c = topK.pollFirst()) != null) {
 			if (counter % COUNTER_DISTANCE == 0) {
 				newSolns.add(c);
 				logger.log(ProdLevel.PROD, 
