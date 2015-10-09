@@ -120,7 +120,7 @@ public class Config {
 	// This is to toggle the decision rule matching on and off. true = off.
 	public static final boolean SHOULD_AVERAGE = true;
 
-	public static final InitStrategy INIT_STRATEGY = InitStrategy.SMALL_DATASETS;
+	public static final InitStrategy INIT_STRATEGY = InitStrategy.RANDOM;//SMALL_DATASETS;
 	public static boolean shdPartitionViols = true;
 
 	// Simulated annealing settings.

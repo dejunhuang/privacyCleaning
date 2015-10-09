@@ -46,7 +46,7 @@ public class SimulAnnealWeighted extends Search {
 
 			@Override
 			public int compare(Candidate o1, Candidate o2) {
-				return Double.compare(o1.getOutput(), o2.getOutput());
+				return Double.compare(o1.getChangesOut(), o2.getChangesOut());
 			}
 		}).maximumSize(TOP_K).create();
 	}
@@ -448,6 +448,7 @@ public class SimulAnnealWeighted extends Search {
 		}
 		initialSoln.setOutput(currentFnOut);
 		bestFnOut = currentFnOut;
+		topK.offer(initialSoln);
 
 		// logger.log(ProdLevel.PROD,"Out : " + currentFnOut);
 
@@ -629,15 +630,18 @@ public class SimulAnnealWeighted extends Search {
 		
 		logger.log(ProdLevel.PROD, "\n\nTOP K : " + "Size: " + topK.size() + "\n");
 		int counter = 0;
-		int COUNTER_DISTANCE = 100;
+		int COUNTER_DISTANCE = 96;
 		Candidate c;
 		while ((c = topK.pollFirst()) != null) {
 			if (counter % COUNTER_DISTANCE == 0) {
+				c.setPvtOutUnorm(c.getPvtOut() * maxPvt);
+				c.setIndOutUnorm(c.getIndOut());
+				c.setChangesOutUnorm(c.getChangesOut() * recSize);
 				newSolns.add(c);
 				logger.log(ProdLevel.PROD, 
-						"Pvt: " + c.getPvtOut() + 
-						", InD: " + c.getIndOut() + 
-						", changes: " + c.getChangesOut() + 
+						"Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
+						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
+						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
 						", All: " + c.getOutput() + "\n");
 			}
 			counter ++;

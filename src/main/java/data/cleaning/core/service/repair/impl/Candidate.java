@@ -52,7 +52,12 @@ public class Candidate {
 	private double pvtOut;
 	private double indOut;
 	private double changesOut;
+	
+	private double pvtOutUnorm;
+	private double indOutUnorm;
+	private double changesOutUnorm;
 
+	// overall weighted score
 	private double output;
 
 	// Can be any random debugging info.
@@ -262,6 +267,30 @@ public class Candidate {
 
 	public void setChangesOut(double changesOut) {
 		this.changesOut = changesOut;
+	}
+	
+	public double getPvtOutUnorm() {
+		return pvtOutUnorm;
+	}
+
+	public void setPvtOutUnorm(double pvtOutUnorm) {
+		this.pvtOutUnorm = pvtOutUnorm;
+	}
+
+	public double getIndOutUnorm() {
+		return indOutUnorm;
+	}
+
+	public void setIndOutUnorm(double indOutUnorm) {
+		this.indOutUnorm = indOutUnorm;
+	}
+
+	public double getChangesOutUnorm() {
+		return changesOutUnorm;
+	}
+
+	public void setChangesOutUnorm(double changesOutUnorm) {
+		this.changesOutUnorm = changesOutUnorm;
 	}
 
 	public Multimap<Long, Recommendation> getTidToRecs(Set<Long> tIds) {
