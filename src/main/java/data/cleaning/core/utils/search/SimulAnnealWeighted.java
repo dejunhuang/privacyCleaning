@@ -392,6 +392,9 @@ public class SimulAnnealWeighted extends Search {
 		logger.log(ProdLevel.PROD, "maxInd : "+ maxInd);
 		logger.log(ProdLevel.PROD, "maxPvt : "+ maxPvt);
 		logger.log(ProdLevel.PROD, "maxChanges : "+ recSize);
+		System.out.println("maxInd : "+ maxInd);
+		System.out.println("maxPvt : "+ maxPvt);
+		System.out.println("maxChanges : "+ recSize);
 
 		int numBitFlipNeighb = sigSize;
 
@@ -402,6 +405,8 @@ public class SimulAnnealWeighted extends Search {
 		}
 
 		logger.log(ProdLevel.PROD, "\n\nNum neighbours : "
+				+ (numBitFlipNeighb + numChoiceNeighb));
+		System.out.println("\n\nNum neighbours : "
 				+ (numBitFlipNeighb + numChoiceNeighb));
 
 		Candidate currentSoln = getInitialSoln(strategy, sigSize,
@@ -463,6 +468,9 @@ public class SimulAnnealWeighted extends Search {
 				logger.log(ProdLevel.PROD, "Best energy (" + bestEnergy
 						+ ") was reached.");
 				logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
+				System.out.println("Best energy (" + bestEnergy
+						+ ") was reached.");
+				System.out.println("\n\nFinal solns : " + solns);
 				return solns;
 			}
 
@@ -510,6 +518,10 @@ public class SimulAnnealWeighted extends Search {
 
 					if (countNeighb + 1 > Config.SA_REPEAT_NEIGHB_THRESHOLD) {
 						logger.log(ProdLevel.PROD, "Same neighb " + randNeighb
+								+ " was seen "
+								+ Config.SA_REPEAT_NEIGHB_THRESHOLD
+								+ " times. Terminating.");
+						System.out.println("Same neighb " + randNeighb
 								+ " was seen "
 								+ Config.SA_REPEAT_NEIGHB_THRESHOLD
 								+ " times. Terminating.");
@@ -621,6 +633,8 @@ public class SimulAnnealWeighted extends Search {
 
 		logger.log(ProdLevel.PROD, "\n\nTot worse solns : " + allWorse
 				+ ", Accepted worse solns : " + accepted);
+		System.out.println("\n\nTot worse solns : " + allWorse
+				+ ", Accepted worse solns : " + accepted);
 
 		if (solns.isEmpty()) {
 			solns.add(initialSoln);
@@ -629,6 +643,7 @@ public class SimulAnnealWeighted extends Search {
 //		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
 		
 		logger.log(ProdLevel.PROD, "\n\nTOP K : " + "Size: " + topK.size() + "\n");
+		System.out.println("\n\nTOP K : " + "Size: " + topK.size() + "\n");
 		int counter = 0;
 		int COUNTER_DISTANCE = 96;
 		Candidate c;
@@ -640,6 +655,10 @@ public class SimulAnnealWeighted extends Search {
 				newSolns.add(c);
 				logger.log(ProdLevel.PROD, 
 						"Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
+						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
+						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
+						", All: " + c.getOutput() + "\n");
+				System.out.println("Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
 						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
 						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
 						", All: " + c.getOutput() + "\n");

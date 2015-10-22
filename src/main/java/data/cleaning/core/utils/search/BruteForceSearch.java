@@ -50,9 +50,20 @@ public class BruteForceSearch extends Search{
 		List<Candidate> initCandidates = getInitCandidates (
 				constraint, tgtMatches, tgtDataset, mDataset);
 		
+		//TODO: for test, delete later
+		for (Candidate c: initCandidates) {
+			Candidate cTemp = getCandidateWithObjectiveScores(c, tgtDataset, mDataset, table, constraint, tgtMatches);
+			System.out.println("pvt: " + cTemp.getPvtOut() + "/" + cTemp.getPvtOutUnorm()
+					+ " util: " + cTemp.getIndOut() + "/" + cTemp.getIndOutUnorm()
+					+ " upd: " + cTemp.getChangesOut() + "/" + cTemp.getChangesOutUnorm());
+		}
+		
 		initCandidates = getCandidatesWithObjectiveScores(initCandidates, tgtDataset, mDataset, table, constraint, tgtMatches);
 		
 		initCandidates = getSortedCandidates(initCandidates);
+		
+		//TODO: this is for debug, delete later
+		printResultDetails(initCandidates);
 		
 		Set<Candidate> candidatesSet = getSetCandidates (initCandidates);
 		return candidatesSet;
@@ -181,7 +192,6 @@ public class BruteForceSearch extends Search{
 				double wOut = weightedFn.out(c, tgtDataset, mDataset,
 						maxPvt, maxInd, recSize) * weightedFn.getWeight();
 				
-
 				if (weightedFn.getClass().getSimpleName()
 						.equals("PrivacyObjective")) {
 					c.setPvtOut(wOut);
@@ -196,6 +206,45 @@ public class BruteForceSearch extends Search{
 		}
 		
 		return can;
+	}
+	
+	// to calculate privacy loss, data cleaning utility and changes objective scores for single candidate
+	private Candidate getCandidateWithObjectiveScores (
+			Candidate c,
+			TargetDataset tgtDataset,
+			MasterDataset mDataset, 
+			InfoContentTable table,
+			Constraint constraint,
+			List<Match> tgtMatches) {
+		double maxInd = calcMaxInd(constraint, tgtDataset.getRecords(),
+				indNormStrat);
+		double maxPvt = table.getMaxInfoContent();
+		
+		PositionalInfo pInfo = calcPositionalInfo(tgtMatches, mDataset,
+				constraint);
+		Map<Integer, Map<Integer, Choice>> positionToChoices = pInfo
+				.getPositionToChoices();
+		List<String> cols = constraint.getColsInConstraint();
+		int sigSize = positionToChoices.keySet().size() * cols.size();
+		long recSize = sigSize;
+		
+		for (Objective weightedFn : weightedFns) {
+			double wOut = weightedFn.out(c, tgtDataset, mDataset,
+					maxPvt, maxInd, recSize) * weightedFn.getWeight();
+			
+			if (weightedFn.getClass().getSimpleName()
+					.equals("PrivacyObjective")) {
+				c.setPvtOut(wOut);
+				
+			} else if (weightedFn.getClass().getSimpleName()
+					.equals("CleaningObjective")) {
+				c.setIndOut(wOut);
+			} else {
+				c.setChangesOut(wOut);
+			}
+		}
+		
+		return c;
 	}
 	
 	//TODO: To be finished
@@ -337,6 +386,20 @@ public class BruteForceSearch extends Search{
 		public void setOverallScore(double overallScore) {
 			this.overallScore = overallScore;
 		}
+	}
+	
+	private void printResultDetails (List<Candidate> c) {
+		System.out.println();
+		System.out.println("# of Candidates: " + c.size());
+		System.out.println("Candidates Details:");
+		
+		for (Candidate cTemp: c) {
+			System.out.println("Pvt: " + cTemp.getPvtOut() + "/" + cTemp.getPvtOutUnorm()
+					+ " Ind: " + cTemp.getIndOut() + "/" + cTemp.getIndOutUnorm()
+					+ " Upd: " + cTemp.getChangesOut() + "/" + cTemp.getChangesOutUnorm());
+		}
+		System.out.println();
+		
 	}
 
 }
