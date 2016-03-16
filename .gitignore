@@ -1,2 +1,9 @@
+# auto generated files
 datasets
 target
+*.out
+
+# setting files for eclipse
+.classpath
+.project
+.settings
