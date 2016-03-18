@@ -389,12 +389,12 @@ public class SimulAnnealWeighted extends Search {
 		if (sigSize <= 0)
 			return null;
 		
-		logger.log(ProdLevel.PROD, "maxInd : "+ maxInd);
-		logger.log(ProdLevel.PROD, "maxPvt : "+ maxPvt);
-		logger.log(ProdLevel.PROD, "maxChanges : "+ recSize);
-		System.out.println("maxInd : "+ maxInd);
-		System.out.println("maxPvt : "+ maxPvt);
-		System.out.println("maxChanges : "+ recSize);
+//		logger.log(ProdLevel.PROD, "maxInd : "+ maxInd);
+//		logger.log(ProdLevel.PROD, "maxPvt : "+ maxPvt);
+//		logger.log(ProdLevel.PROD, "maxChanges : "+ recSize);
+//		System.out.println("maxInd : "+ maxInd);
+//		System.out.println("maxPvt : "+ maxPvt);
+//		System.out.println("maxChanges : "+ recSize);
 
 		int numBitFlipNeighb = sigSize;
 
@@ -404,10 +404,10 @@ public class SimulAnnealWeighted extends Search {
 			numChoiceNeighb += choice.size() - 1;
 		}
 
-		logger.log(ProdLevel.PROD, "\n\nNum neighbours : "
-				+ (numBitFlipNeighb + numChoiceNeighb));
-		System.out.println("\n\nNum neighbours : "
-				+ (numBitFlipNeighb + numChoiceNeighb));
+//		logger.log(ProdLevel.PROD, "\n\nNum neighbours : "
+//				+ (numBitFlipNeighb + numChoiceNeighb));
+//		System.out.println("\n\nNum neighbours : "
+//				+ (numBitFlipNeighb + numChoiceNeighb));
 
 		Candidate currentSoln = getInitialSoln(strategy, sigSize,
 				positionToChoices, pInfo.getPositionToExactMatch(),
@@ -631,10 +631,10 @@ public class SimulAnnealWeighted extends Search {
 			temperature = temperature * alpha;
 		}
 
-		logger.log(ProdLevel.PROD, "\n\nTot worse solns : " + allWorse
-				+ ", Accepted worse solns : " + accepted);
-		System.out.println("\n\nTot worse solns : " + allWorse
-				+ ", Accepted worse solns : " + accepted);
+//		logger.log(ProdLevel.PROD, "\n\nTot worse solns : " + allWorse
+//				+ ", Accepted worse solns : " + accepted);
+//		System.out.println("\n\nTot worse solns : " + allWorse
+//				+ ", Accepted worse solns : " + accepted);
 
 		if (solns.isEmpty()) {
 			solns.add(initialSoln);
@@ -642,8 +642,8 @@ public class SimulAnnealWeighted extends Search {
 
 //		logger.log(ProdLevel.PROD, "\n\nFinal solns : " + solns);
 		
-		logger.log(ProdLevel.PROD, "\n\nTOP K : " + "Size: " + topK.size() + "\n");
-		System.out.println("\n\nTOP K : " + "Size: " + topK.size() + "\n");
+//		logger.log(ProdLevel.PROD, "\n\nTOP K : " + "Size: " + topK.size() + "\n");
+//		System.out.println("\n\nTOP K : " + "Size: " + topK.size() + "\n");
 		int counter = 0;
 		int COUNTER_DISTANCE = 96;
 		Candidate c;
@@ -653,15 +653,15 @@ public class SimulAnnealWeighted extends Search {
 				c.setIndOutUnorm(c.getIndOut());
 				c.setChangesOutUnorm(c.getChangesOut() * recSize);
 				newSolns.add(c);
-				logger.log(ProdLevel.PROD, 
-						"Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
-						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
-						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
-						", All: " + c.getOutput() + "\n");
-				System.out.println("Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
-						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
-						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
-						", All: " + c.getOutput() + "\n");
+//				logger.log(ProdLevel.PROD, 
+//						"Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
+//						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
+//						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
+//						", All: " + c.getOutput() + "\n");
+//				System.out.println("Pvt: " + c.getPvtOut() + " / " + c.getPvtOut() * maxPvt + 
+//						", InD: " + c.getIndOut() + "/" + c.getIndOut() +
+//						", changes: " + c.getChangesOut() + " / " + c.getChangesOut() * recSize +
+//						", All: " + c.getOutput() + "\n");
 			}
 			counter ++;
 		}
