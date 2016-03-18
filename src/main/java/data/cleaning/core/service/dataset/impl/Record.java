@@ -1,5 +1,6 @@
 package data.cleaning.core.service.dataset.impl;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,7 @@ import java.util.Map.Entry;
 
 import data.cleaning.core.service.errgen.impl.ErrorMetadata;
 
-public class Record {
+public class Record implements Serializable{
 	// Record id is a unique identifier to track a record obj and does not exist
 	// as an attribute in the dataset. Final keyword for defensive programming.
 	private final long id;

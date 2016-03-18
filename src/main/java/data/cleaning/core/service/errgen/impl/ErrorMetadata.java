@@ -1,9 +1,10 @@
 package data.cleaning.core.service.errgen.impl;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ErrorMetadata {
+public class ErrorMetadata implements Serializable{
 	// Extra info if this record had errors injected. Map contains attr to
 	// original attr value.
 	private Map<String, String> errorsColsToVal;
